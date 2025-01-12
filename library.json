@@ -1,0 +1,25 @@
+{
+  "name": "ESP32 OTA Update Manager",
+  "version": "1.0.0",
+  "description": "A versatile OTA Update manager with fully automatic IoT upgrade option and optionally configuration stored on non volatile memory.",
+  "keywords": "esp32, ota, iot, api, manager, arduino",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/MartinVerges/esp32-ota-update-manager"
+  },
+  "authors":
+  [
+    {
+      "name": "Martin Verges",
+      "email": "martin@verges.cc",
+      "maintainer": true
+    }
+  ],
+  "license": "CC-BY-NC-SA-4.0",
+  "dependencies": {
+    "bblanchon/ArduinoJson": "^7.3.0"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}
