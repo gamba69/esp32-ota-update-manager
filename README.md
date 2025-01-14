@@ -19,14 +19,59 @@ It is only made and tested it on my ESP32 Microcontroller.
 
 3) If you do not provide a URL, you can use the Webinterface attached to your ESPAsyncWebserver to upload a firmware.
 
-## What do I need to do?
+## Installation
+
+Add the following lines to your program code:
+
+```
+#include "otawebupdater.h"
+
+void setup() {
+  OtaWebUpdater.setBaseUrl(OTA_BASE_URL);        // Set the OTA Base URL for automatic updates
+  OtaWebUpdater.setFirmware(__DATE__, '1.0.0');  // Set the current firmware version
+  OtaWebUpdater.startBackgroundTask();           // Run the background task to check for updates
+  OtaWebUpdater.attachWebServer(&webServer);     // Attach our API to the Webserver
+  OtaWebUpdater.attachUI();                      // Attach the UI to the Webserver
+}
+void loop() {
+  // Do not continue regular operation as long as a OTA is running
+  // Reason: Background workload can cause upgrade issues that we want to avoid!
+  if (otaWebUpdater->otaIsRunning) { yield(); delay(50); return; };
+}
+```
+
+## What do I need to do to access it?
 
 If you want to use this OTA Update Manager, you can access the UI at `/ota`!
-
-## Build in UI
-
 The UI route is only loaded to `/ota` if you execute `attachUI()` inside your script.
+
+![UI Component](documentation/ui-screenshot.png)
+
 Without the UI, you can only run as a background task to update from a remote URL.
+This is best for IoT devices that you want to update without any user interaction.
+
+## IoT Automatic Update
+
+To enable automatic remote updates, you need to create a json file on a webserver.
+Add `OtaWebUpdater.setBaseUrl("http://yourserver.local");` to your code `setup()` routine.
+
+The device will then try to find a new version every 24 hours.
+You can change the interval using `setVersionCheckInterval(minutes)` if you want to change this.
+
+Create a `current-version.json` on your webserver that contains the information about the latest image.
+
+```
+{
+    "revision": "v1.0.0",
+    "date": "2025-01-12"
+}
+```
+
+If the date is newer than the current running build, an automatic update will be executed.
+Make sure that you provide a `littlefs.bin` and a `firmware.bin` on the same URL to be installed.
+
+Please let me know if you need a more advanced firmware installation process and feel free to provide a patch.
+For my personal needs this is good enough to update all my devices automatically.
 
 ## Dependencies
 
