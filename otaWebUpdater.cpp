@@ -206,8 +206,8 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
     doc["size"] = data->size;
     doc["label"] = data->label;
     doc["encrypted"] = data->encrypted;
-    doc["firmware_version"] = AUTO_FW_VERSION;
-    doc["firmware_date"] = AUTO_FW_DATE;
+    doc["firmware_version"] = currentFwRelease;
+    doc["firmware_date"] = currentFwDate;
     serializeJson(doc, output);
     request->send(200, "application/json", output);
   });
