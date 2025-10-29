@@ -154,7 +154,7 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
 
   webServer->on((apiPrefix + "/config").c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
     String output;
-    DynamicJsonDocument doc(256);
+    JsonDocument doc(256);
     doc["baseUrl"] = getBaseUrl();
     doc["otaPassword"] = "";
     doc["intervalVersionCheck"] = intervalVersionCheckMillis / 60 / 1000;
@@ -195,7 +195,7 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
   webServer->on((apiPrefix + "/firmware/info").c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
     auto data = esp_ota_get_running_partition();
     String output;
-    DynamicJsonDocument doc(256);
+    JsonDocument doc(256);
     doc["partition_type"] = data->type;
     doc["partition_subtype"] = data->subtype;
     doc["address"] = data->address;
@@ -229,7 +229,7 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
 
   webServer->on((apiPrefix + "/esp").c_str(), HTTP_GET, [&](AsyncWebServerRequest * request) {
     String output;
-    DynamicJsonDocument json(2048);
+    JsonDocument json(2048);
 
     JsonObject booting = json.createNestedObject("booting");
     booting["rebootReason"] = esp_reset_reason();
@@ -339,7 +339,7 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
     if (final) {
       if (!Update.end(true)) {
         String output;
-        DynamicJsonDocument doc(32);
+        JsonDocument doc(32);
         doc["message"] = "Update error";
         doc["error"] = Update.errorString();
         serializeJson(doc, output);
@@ -450,7 +450,7 @@ bool OTAWEBUPDATER::checkAvailableVersion() {
   http.GET();
 
   // Parse response
-  DynamicJsonDocument doc(2048);
+  JsonDocument doc(2048);
   deserializeJson(doc, http.getStream());
 
   // Disconnect
