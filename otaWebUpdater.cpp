@@ -110,7 +110,7 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char * ns) {
   logMessage("[OTA] NVS is not used, ignoring namespace '" + String(ns) + "' settings");
 #endif
 
-  temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT;
+  temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
   temp_sensor_set_config(tsens_config);
 
   auto data = esp_ota_get_running_partition();
