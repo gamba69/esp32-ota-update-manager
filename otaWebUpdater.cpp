@@ -20,14 +20,7 @@
 #include <Preferences.h>
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-uint8_t temprature_sens_read();
-#ifdef __cplusplus
-}
-#endif
-uint8_t temprature_sens_read();
+#include <driver/temp_sensor.h>
 
 /**
  * @brief Write a message to the Serial interface
@@ -116,6 +109,9 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char * ns) {
 #else
   logMessage("[OTA] NVS is not used, ignoring namespace '" + String(ns) + "' settings");
 #endif
+
+  temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT;
+  temp_sensor_set_config(tsens_config);
 
   auto data = esp_ota_get_running_partition();
   logMessage("[OTA] Running partition: " + String(data->label) + " (" + String(data->subtype) + ")");
@@ -290,7 +286,9 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
     chip["cycleCount"] = ESP.getCycleCount();
     chip["sdkVersion"] = ESP.getSdkVersion();
     chip["efuseMac"] = ESP.getEfuseMac();
-    chip["temperature"] = (temprature_sens_read() - 32) / 1.8;
+    float temperature_c;
+    temp_sensor_read_celsius(&temperature_c);
+    chip["temperature"] = temperature_c;
 
     JsonObject flash = json.createNestedObject("flash");
     flash["flashChipSize"] = ESP.getFlashChipSize();
