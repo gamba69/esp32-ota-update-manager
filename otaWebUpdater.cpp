@@ -231,12 +231,12 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
     String output;
     JsonDocument json;
 
-    JsonObject booting = json.createNestedObject("booting");
+    JsonObject booting = json["booting"].to<JsonObject>();
     booting["rebootReason"] = esp_reset_reason();
     booting["partitionCount"] = esp_ota_get_app_partition_count();
 
     auto partition = esp_ota_get_boot_partition();
-    JsonObject bootPartition = json.createNestedObject("bootPartition");
+    JsonObject bootPartition = json["bootPartition"].to<JsonObject>();
     bootPartition["address"] = partition->address;
     bootPartition["size"] = partition->size;
     bootPartition["label"] = partition->label;
@@ -249,7 +249,7 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
     bootPartition["subtype"] = partition->subtype;
 
     partition = esp_ota_get_running_partition();
-    JsonObject runningPartition = json.createNestedObject("runningPartition");
+    JsonObject runningPartition = json["runningPartition"].to<JsonObject>();
     runningPartition["address"] = partition->address;
     runningPartition["size"] = partition->size;
     runningPartition["label"] = partition->label;
@@ -261,24 +261,24 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
     }
     runningPartition["subtype"] = partition->subtype;
 
-    JsonObject build = json.createNestedObject("build");
+    JsonObject build = json["build"].to<JsonObject>();
     build["date"] = __DATE__;
     build["time"] = __TIME__;
 
-    JsonObject ram = json.createNestedObject("ram");
+    JsonObject ram = json["ram"].to<JsonObject>();
     ram["heapSize"] = ESP.getHeapSize();
     ram["freeHeap"] = ESP.getFreeHeap();
     ram["usagePercent"] = (float)ESP.getFreeHeap() / (float)ESP.getHeapSize() * 100.f;
     ram["minFreeHeap"] = ESP.getMinFreeHeap();
     ram["maxAllocHeap"] = ESP.getMaxAllocHeap();
 
-    JsonObject spi = json.createNestedObject("spi");
+    JsonObject spi = json["spi"].to<JsonObject>();
     spi["psramSize"] = ESP.getPsramSize();
     spi["freePsram"] = ESP.getFreePsram();
     spi["minFreePsram"] = ESP.getMinFreePsram();
     spi["maxAllocPsram"] = ESP.getMaxAllocPsram();
 
-    JsonObject chip = json.createNestedObject("chip");
+    JsonObject chip = json["chip"].to<JsonObject>();
     chip["revision"] = ESP.getChipRevision();
     chip["model"] = ESP.getChipModel();
     chip["cores"] = ESP.getChipCores();
@@ -290,14 +290,14 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
     temp_sensor_read_celsius(&temperature_c);
     chip["temperature"] = temperature_c;
 
-    JsonObject flash = json.createNestedObject("flash");
+    JsonObject flash = json["flash"].to<JsonObject>();
     flash["flashChipSize"] = ESP.getFlashChipSize();
     flash["flashChipRealSize"] = spi_flash_get_chip_size();
     flash["flashChipSpeedMHz"] = ESP.getFlashChipSpeed() / 1000000;
     flash["flashChipMode"] = ESP.getFlashChipMode();
     flash["sdkVersion"] = ESP.getFlashChipSize();
 
-    JsonObject sketch = json.createNestedObject("sketch");
+    JsonObject sketch = json["sketch"].to<JsonObject>();
     sketch["size"] = ESP.getSketchSize();
     sketch["maxSize"] = ESP.getFreeSketchSpace();
     sketch["usagePercent"] = (float)ESP.getSketchSize() / (float)ESP.getFreeSketchSpace() * 100.f;
