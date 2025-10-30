@@ -30,14 +30,23 @@
  * to the serial console. It can be overwritten by a custom implementation for
  * enhanced logging.
  */
-void OTAWEBUPDATER::logMessage(String msg) {
+void OTAWEBUPDATER::logMessage(String msg, bool showtime) {
+    if (logtime && showtime) {
+        logger->print(logtime() + " ");
+    }
     logger->println(msg);
 }
-void OTAWEBUPDATER::logMessagePart(String msg) {
+
+void OTAWEBUPDATER::logMessagePart(String msg, bool showtime) {
+    if (logtime && showtime) {
+        logger->print(logtime() + " ");
+    }
     logger->print(msg);
 }
-void OTAWEBUPDATER::setLogger(Stream *stream) {
+
+void OTAWEBUPDATER::setLogger(Stream *stream, std::function<String()> function) {
     logger = stream;
+    logtime = function;
 }
 
 /**

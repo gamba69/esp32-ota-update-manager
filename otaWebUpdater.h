@@ -3,9 +3,9 @@
  * @author Martin Verges <martin@verges.cc>
  * @version 0.3
  * @date 2025-01-06
- * 
+ *
  * @copyright Copyright (c) 2022-2024 by the author alone
- * 
+ *
  * License: CC BY-NC-SA 4.0
  */
 
@@ -24,20 +24,22 @@
 #endif
 
 struct OtaWebVersion {
-  String date;
-  String version;
+    String date;
+    String version;
 };
 
-void otaTask(void* param);
+void otaTask(void *param);
 
 class OTAWEBUPDATER {
   protected:
     // Logger stream
     Stream *logger = &Serial;
+    // Logger time function
+    std::function<String()> logtime = NULL;
 
 #if OTAWEBUPDATER_USE_NVS == true
-    Preferences preferences;            // Used to store AP credentials to NVS
-    char * NVS;                         // Name used for NVS preferences
+    Preferences preferences; // Used to store AP credentials to NVS
+    char *NVS;               // Name used for NVS preferences
 #endif
 
   public:
@@ -52,16 +54,16 @@ class OTAWEBUPDATER {
 
     // Prefix for all API endpoints
     String apiPrefix = "/api/ota";
-    String uiPrefix = "/ota";          // Prefix for all UI endpionts
+    String uiPrefix = "/ota"; // Prefix for all UI endpionts
 
     // Initialize the OtaWebUpdater
-    OTAWEBUPDATER(const char * ns = "otawebupdater");
+    OTAWEBUPDATER(const char *ns = "otawebupdater");
 
     // Destruct this object
     virtual ~OTAWEBUPDATER();
 
     // Attach a webserver (if not done on vitialization)
-    void attachWebServer(AsyncWebServer * srv);
+    void attachWebServer(AsyncWebServer *srv);
 
     // Attach a UI to manage the firmware
     void attachUI();
@@ -98,23 +100,23 @@ class OTAWEBUPDATER {
 
     // Set Firmware information
     void setFirmware(String fwDate, String fwRelease) {
-      currentFwDate = fwDate;
-      currentFwRelease = fwRelease;
+        currentFwDate = fwDate;
+        currentFwRelease = fwRelease;
     }
 
     // Set current logger
-    void setLogger(Stream *stream);
+    void setLogger(Stream *stream, std::function<String()> logtime = NULL);
 
   private:
-    // Print a log message to Serial, can be overwritten
-    virtual void logMessage(String msg);
-    // Print a part of log message to Serial, can be overwritten
-    virtual void logMessagePart(String msg);
+    // Print a log message, can be overwritten
+    virtual void logMessage(String msg, bool showtime = true);
+    // Print a part of log message, can be overwritten
+    virtual void logMessagePart(String msg, bool showtime = false);
 
     // URL to load the data from
     // Files that needs to be located at this URL:
     //  - current-version.json       json with version information
-    //  - boot_app0.bin              ESP32 boot code 
+    //  - boot_app0.bin              ESP32 boot code
     //  - bootloader_dio_80m.bin     ESP32 boot code
     //  - partitions.bin             ESP32 flash partition layout
     //  - firmware.bin               This firmware file
@@ -122,14 +124,14 @@ class OTAWEBUPDATER {
     String baseUrl = "";
 
     // The Webserver to register routes on
-    AsyncWebServer * webServer;
+    AsyncWebServer *webServer;
 
     // Task handle for the background task
     TaskHandle_t otaCheckTask = NULL;
 
     // Time of last version check
     uint64_t lastVersionCheckMillis = 0;
-    
+
     // Interval to check for new versions (should be hours!!)s
     uint64_t intervalVersionCheckMillis = 24 * 60 * 60 * 1000; // 24 hours
 
