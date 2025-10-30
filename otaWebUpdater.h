@@ -32,8 +32,8 @@ void otaTask(void *param);
 
 class OTAWEBUPDATER {
   protected:
-    // Logger stream
-    Stream *logger = &Serial;
+    // Logger print
+    Print *logger = &Serial;
     // Logger time function
     std::function<String()> logtime = NULL;
 
@@ -105,7 +105,7 @@ class OTAWEBUPDATER {
     }
 
     // Set current logger
-    void setLogger(Stream *stream, std::function<String()> logtime = NULL);
+    void setLogger(Print *print, std::function<String()> logtime = NULL);
 
   private:
     // Print a log message, can be overwritten
