@@ -4,17 +4,17 @@
  *
  * Licensed under CC BY-NC-SA 4.0
  * (Attribution-NonCommercial-ShareAlike 4.0 International)
-**/
+ **/
 
 #include "otaWebUpdater.h"
 
 #include <AsyncJson.h>
-#include <WiFi.h>
 #include <HTTPClient.h>
 #include <Update.h>
-#include <esp_ota_ops.h>
+#include <WiFi.h>
 #include <esp_err.h>
-#include <new>          // ::operator new[]
+#include <esp_ota_ops.h>
+#include <new> // ::operator new[]
 
 #if OTAWEBUPDATER_USE_NVS == true
 #include <Preferences.h>
@@ -27,11 +27,11 @@
  * @param msg The message to be written
  *
  * This function is a simple wrapper around Serial.print() to write a message
- * to the serial console. It can be overwritten by a custom implementation for 
+ * to the serial console. It can be overwritten by a custom implementation for
  * enhanced logging.
  */
 void OTAWEBUPDATER::logMessage(String msg) {
-  Serial.print(msg);
+    Serial.print(msg);
 }
 
 /**
@@ -43,40 +43,42 @@ void OTAWEBUPDATER::logMessage(String msg) {
  */
 void OTAWEBUPDATER::setBaseUrl(String newUrl) {
 #if OTAWEBUPDATER_USE_NVS == true
-  if (preferences.begin(NVS, true)) {
-    if (preferences.putString("baseUrl", newUrl)) {
-      logMessage("[OTA] Updated baseUrl in NVS to " + newUrl + "\n");
-    } else logMessage("[OTA] Failed to update baseUrl in NVS\n");
-    preferences.end();
-  }
+    if (preferences.begin(NVS, true)) {
+        if (preferences.putString("baseUrl", newUrl)) {
+            logMessage("[OTA] Updated baseUrl in NVS to " + newUrl + "\n");
+        } else
+            logMessage("[OTA] Failed to update baseUrl in NVS\n");
+        preferences.end();
+    }
 #endif
-  baseUrl = newUrl;
+    baseUrl = newUrl;
 }
 
 void OTAWEBUPDATER::setVersionCheckInterval(uint32_t minutes) {
 #if OTAWEBUPDATER_USE_NVS == true
-  if (preferences.begin(NVS, true)) {
-    if (preferences.putULong64("VersChkIntvl", minutes * 60 * 1000)) {
-      logMessage("[OTA] Updated VersionCheckInterval in NVS to " + String(minutes) + " minutes\n");
-    } else logMessage("[OTA] Failed to update VersionCheckInterval in NVS\n");
-    preferences.end();
-  }
+    if (preferences.begin(NVS, true)) {
+        if (preferences.putULong64("VersChkIntvl", minutes * 60 * 1000)) {
+            logMessage("[OTA] Updated VersionCheckInterval in NVS to " + String(minutes) + " minutes\n");
+        } else
+            logMessage("[OTA] Failed to update VersionCheckInterval in NVS\n");
+        preferences.end();
+    }
 #endif
     intervalVersionCheckMillis = minutes * 60 * 1000;
 }
 
 void OTAWEBUPDATER::setOtaPassword(String newPass) {
 #if OTAWEBUPDATER_USE_NVS == true
-  if (preferences.begin(NVS, true)) {
-    if (preferences.putString("OtaPassword", newPass)) {
-      logMessage("[OTA] Updated OtaPassword in NVS to " + newPass + "\n");
-    } else logMessage("[OTA] Failed to update OtaPassword in NVS\n");
-    preferences.end();
-  }
+    if (preferences.begin(NVS, true)) {
+        if (preferences.putString("OtaPassword", newPass)) {
+            logMessage("[OTA] Updated OtaPassword in NVS to " + newPass + "\n");
+        } else
+            logMessage("[OTA] Failed to update OtaPassword in NVS\n");
+        preferences.end();
+    }
 #endif
-  otaPassword = newPass;
+    otaPassword = newPass;
 }
-
 
 /**
  * @brief Construct a new OTAWEBUPDATER::OtaWebUpdater object
@@ -89,52 +91,53 @@ void OTAWEBUPDATER::setOtaPassword(String newPass) {
  * network connection is established, the networkReady flag is set to true. When
  * the network connection is lost, the networkReady flag is set to false.
  */
-OTAWEBUPDATER::OTAWEBUPDATER(const char * ns) {
+OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
 
 #if OTAWEBUPDATER_USE_NVS == true
-  // Restore settings from NVS when loading the class
-  NVS = (char *)ns;
-  if (preferences.begin(NVS, true)) {
-    baseUrl = preferences.getString("baseUrl", baseUrl);
-    logMessage("[OTA] Loaded baseUrl from NVS: " + baseUrl);
+    // Restore settings from NVS when loading the class
+    NVS = (char *)ns;
+    if (preferences.begin(NVS, true)) {
+        baseUrl = preferences.getString("baseUrl", baseUrl);
+        logMessage("[OTA] Loaded baseUrl from NVS: " + baseUrl + "\n");
 
-    intervalVersionCheckMillis = preferences.getULong64("VersChkIntvl", intervalVersionCheckMillis);
-    logMessage("[OTA] Loaded VersionCheckInterval from NVS: " + String(intervalVersionCheckMillis/60/1000) + " minutes");
+        intervalVersionCheckMillis = preferences.getULong64("VersChkIntvl", intervalVersionCheckMillis);
+        logMessage("[OTA] Loaded VersionCheckInterval from NVS: " + String(intervalVersionCheckMillis / 60 / 1000) + " minutes" + "\n");
 
-    otaPassword = preferences.getString("OtaPassword", otaPassword);
-    logMessage("[OTA] Loaded OtaPassword from NVS: " + otaPassword);
-    
-    preferences.end();
-  }
+        otaPassword = preferences.getString("OtaPassword", otaPassword);
+        logMessage("[OTA] Loaded OtaPassword from NVS: " + otaPassword + "\n");
+
+        preferences.end();
+    }
 #else
-  logMessage("[OTA] NVS is not used, ignoring namespace '" + String(ns) + "' settings");
+    logMessage("[OTA] NVS is not used, ignoring namespace '" + String(ns) + "' settings" + "\n");
 #endif
 
-  temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
-  temp_sensor_set_config(tsens_config);
+    temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
+    temp_sensor_set_config(tsens_config);
 
-  auto data = esp_ota_get_running_partition();
-  logMessage("[OTA] Running partition: " + String(data->label) + " (" + String(data->subtype) + ")");
+    auto data = esp_ota_get_running_partition();
+    logMessage("[OTA] Running partition: " + String(data->label) + " (" + String(data->subtype) + ")");
 
-  logMessage("[OTA] Created, registering WiFi events");
-  if (WiFi.isConnected()) networkReady = true;
+    logMessage("[OTA] Created, registering WiFi events");
+    if (WiFi.isConnected())
+        networkReady = true;
 
-  auto eventHandlerUp = [&](WiFiEvent_t event, WiFiEventInfo_t info) {
-    logMessage("[OTA][WIFI] onEvent() Network connected");
-    networkReady = true;
-  };
-  WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_GOT_IP);
-  WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_GOT_IP6);
-  WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_ETH_GOT_IP);
-  WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_ETH_GOT_IP6);
+    auto eventHandlerUp = [&](WiFiEvent_t event, WiFiEventInfo_t info) {
+        logMessage("[OTA][WIFI] onEvent() Network connected");
+        networkReady = true;
+    };
+    WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_GOT_IP);
+    WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_GOT_IP6);
+    WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_ETH_GOT_IP);
+    WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_ETH_GOT_IP6);
 
-  auto eventHandlerDown = [&](WiFiEvent_t event, WiFiEventInfo_t info) {
-    logMessage("[OTA][WIFI] onEvent() Network disconnected");
-    networkReady = false;
-  };
-  WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-  WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
-  WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_ETH_DISCONNECTED);
+    auto eventHandlerDown = [&](WiFiEvent_t event, WiFiEventInfo_t info) {
+        logMessage("[OTA][WIFI] onEvent() Network disconnected" + "\n");
+        networkReady = false;
+    };
+    WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+    WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
+    WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_ETH_DISCONNECTED);
 }
 
 /**
@@ -142,291 +145,304 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char * ns) {
  * @details will stop the background task as well but not cleanup the AsyncWebserver
  */
 OTAWEBUPDATER::~OTAWEBUPDATER() {
-  stopBackgroundTask();
-  // FIXME: get rid of the registered Webserver AsyncCallbackWebHandlers
+    stopBackgroundTask();
+    // FIXME: get rid of the registered Webserver AsyncCallbackWebHandlers
 }
 
 /**
  * @brief Attach to a webserver and register the API routes
  */
-void OTAWEBUPDATER::attachWebServer(AsyncWebServer * srv) {
-  webServer = srv; // store it in the class for later use
+void OTAWEBUPDATER::attachWebServer(AsyncWebServer *srv) {
+    webServer = srv; // store it in the class for later use
 
-  webServer->on((apiPrefix + "/config").c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-    String output;
-    JsonDocument doc;
-    doc["baseUrl"] = getBaseUrl();
-    doc["otaPassword"] = "";
-    doc["intervalVersionCheck"] = intervalVersionCheckMillis / 60 / 1000;
-    serializeJson(doc, output);
-    request->send(200, "application/json", output);
-  });
-
-  webServer->on((apiPrefix + "/config").c_str(), HTTP_POST, [&](AsyncWebServerRequest * request){}, NULL,
-    [&](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total) {
-    JsonDocument jsonBuffer;
-    deserializeJson(jsonBuffer, (const char*)data);
-    auto resp = request;
-    auto changes = 0;
-
-    if (jsonBuffer["baseUrl"].is<String>()) {
-      setBaseUrl(jsonBuffer["baseUrl"].as<String>());
-      logMessage("[OTA][CONFIG] baseUrl changed to " + baseUrl);
-      changes++;
-    }
-    if (jsonBuffer["otaPassword"].is<String>()) {
-      setOtaPassword(jsonBuffer["otaPassword"].as<String>());
-      logMessage("[OTA][CONFIG] otaPassword changed to " + otaPassword);
-      changes++;
-    }
-    if (jsonBuffer["intervalVersionCheck"].is<int>()) {
-      setVersionCheckInterval(jsonBuffer["intervalVersionCheck"].as<int>());
-      logMessage("[OTA][CONFIG] intervalVersionCheck changed to " + String(intervalVersionCheckMillis/60/1000) + " minutes");
-      changes++;
-    }
-    
-    if (!changes) {
-      resp->send(422, "application/json", "{\"message\":\"Invalid data\"}");
-    } else {
-      resp->send(200, "application/json", "{\"message\":\"Config updated\"}");
-    } 
-  });
-
-  webServer->on((apiPrefix + "/firmware/info").c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-    auto data = esp_ota_get_running_partition();
-    String output;
-    JsonDocument doc;
-    doc["partition_type"] = data->type;
-    doc["partition_subtype"] = data->subtype;
-    doc["address"] = data->address;
-    doc["size"] = data->size;
-    doc["label"] = data->label;
-    doc["encrypted"] = data->encrypted;
-    doc["firmware_version"] = currentFwRelease;
-    doc["firmware_date"] = currentFwDate;
-    serializeJson(doc, output);
-    request->send(200, "application/json", output);
-  });
-
-  webServer->on((apiPrefix + "/partition/switch").c_str(), HTTP_POST, [&](AsyncWebServerRequest * request) {
-    logMessage("[OTA] Switching boot partition");
-    auto next = esp_ota_get_next_update_partition(NULL);
-    auto error = esp_ota_set_boot_partition(next);
-    if (error == ESP_OK) {
-      logMessage("[OTA] New partition ready for boot");
-      request->send(200, "application/json", "{\"message\":\"New partition ready for boot. Rebooting....\"}");
-      yield();
-      delay(250);
-
-      logMessage("[OTA] Rebooting now!");
-      Serial.flush();
-      ESP.restart();
-    } else {
-      logMessage("[OTA] Error switching boot partition - " + String(esp_err_to_name(error)));
-      request->send(500, "application/json", String("{\"message\":\"Error switching boot partition - ") + String(esp_err_to_name(error)) + "\"}");
-    }
-  });
-
-  webServer->on((apiPrefix + "/esp").c_str(), HTTP_GET, [&](AsyncWebServerRequest * request) {
-    String output;
-    JsonDocument json;
-
-    JsonObject booting = json["booting"].to<JsonObject>();
-    booting["rebootReason"] = esp_reset_reason();
-    booting["partitionCount"] = esp_ota_get_app_partition_count();
-
-    auto partition = esp_ota_get_boot_partition();
-    JsonObject bootPartition = json["bootPartition"].to<JsonObject>();
-    bootPartition["address"] = partition->address;
-    bootPartition["size"] = partition->size;
-    bootPartition["label"] = partition->label;
-    bootPartition["encrypted"] = partition->encrypted;
-    switch (partition->type) {
-      case ESP_PARTITION_TYPE_APP:  bootPartition["type"] = "app"; break;
-      case ESP_PARTITION_TYPE_DATA: bootPartition["type"] = "data"; break;
-      default: bootPartition["type"] = "any";
-    }
-    bootPartition["subtype"] = partition->subtype;
-
-    partition = esp_ota_get_running_partition();
-    JsonObject runningPartition = json["runningPartition"].to<JsonObject>();
-    runningPartition["address"] = partition->address;
-    runningPartition["size"] = partition->size;
-    runningPartition["label"] = partition->label;
-    runningPartition["encrypted"] = partition->encrypted;
-    switch (partition->type) {
-      case ESP_PARTITION_TYPE_APP:  runningPartition["type"] = "app"; break;
-      case ESP_PARTITION_TYPE_DATA: runningPartition["type"] = "data"; break;
-      default: runningPartition["type"] = "any";
-    }
-    runningPartition["subtype"] = partition->subtype;
-
-    JsonObject build = json["build"].to<JsonObject>();
-    build["date"] = __DATE__;
-    build["time"] = __TIME__;
-
-    JsonObject ram = json["ram"].to<JsonObject>();
-    ram["heapSize"] = ESP.getHeapSize();
-    ram["freeHeap"] = ESP.getFreeHeap();
-    ram["usagePercent"] = (float)ESP.getFreeHeap() / (float)ESP.getHeapSize() * 100.f;
-    ram["minFreeHeap"] = ESP.getMinFreeHeap();
-    ram["maxAllocHeap"] = ESP.getMaxAllocHeap();
-
-    JsonObject spi = json["spi"].to<JsonObject>();
-    spi["psramSize"] = ESP.getPsramSize();
-    spi["freePsram"] = ESP.getFreePsram();
-    spi["minFreePsram"] = ESP.getMinFreePsram();
-    spi["maxAllocPsram"] = ESP.getMaxAllocPsram();
-
-    JsonObject chip = json["chip"].to<JsonObject>();
-    chip["revision"] = ESP.getChipRevision();
-    chip["model"] = ESP.getChipModel();
-    chip["cores"] = ESP.getChipCores();
-    chip["cpuFreqMHz"] = ESP.getCpuFreqMHz();
-    chip["cycleCount"] = ESP.getCycleCount();
-    chip["sdkVersion"] = ESP.getSdkVersion();
-    chip["efuseMac"] = ESP.getEfuseMac();
-    float temperature_c;
-    temp_sensor_read_celsius(&temperature_c);
-    chip["temperature"] = temperature_c;
-
-    JsonObject flash = json["flash"].to<JsonObject>();
-    flash["flashChipSize"] = ESP.getFlashChipSize();
-    flash["flashChipRealSize"] = spi_flash_get_chip_size();
-    flash["flashChipSpeedMHz"] = ESP.getFlashChipSpeed() / 1000000;
-    flash["flashChipMode"] = ESP.getFlashChipMode();
-    flash["sdkVersion"] = ESP.getFlashChipSize();
-
-    JsonObject sketch = json["sketch"].to<JsonObject>();
-    sketch["size"] = ESP.getSketchSize();
-    sketch["maxSize"] = ESP.getFreeSketchSpace();
-    sketch["usagePercent"] = (float)ESP.getSketchSize() / (float)ESP.getFreeSketchSpace() * 100.f;
-    sketch["md5"] = ESP.getSketchMD5();
-
-    serializeJson(json, output);
-    request->send(200, "application/json", output);
-  });
-
-  webServer->on((apiPrefix + "/upload").c_str(), HTTP_POST,
-    [&](AsyncWebServerRequest *request) { },
-    [&](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
-
-    if (otaPassword.length()) {
-      if(!request->authenticate("ota", otaPassword.c_str())) {
-        logMessage("[OTA] Incorrect OTA request: Invalid password provided!");
-        return request->send(401, "application/json", "{\"message\":\"Invalid OTA password provided!\"}");
-      }
-    } // else logMessage("[OTA] No password confirequest->authenticategured, no authentication requested!");
-
-    if (!index) {
-      otaIsRunning = true;
-      logMessage("[OTA] Begin firmware update with filename: " + filename);
-      // if filename includes spiffs|littlefs, update the spiffs|littlefs partition
-      int cmd = (filename.indexOf("spiffs") > -1 || filename.indexOf("littlefs") > -1) ? U_SPIFFS : U_FLASH;
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
-        logMessage("[OTA] Error: " + String(Update.errorString()));
-        request->send(500, "application/json", "{\"message\":\"Unable to begin firmware update!\"}");
-        otaIsRunning = false;
-      }
-    }
-
-    if (Update.write(data, len) != len) {
-      logMessage("[OTA] Error: " + String(Update.errorString()));
-      request->send(500, "application/json", "{\"message\":\"Unable to write firmware update data!\"}");
-      otaIsRunning = false;
-    }
-
-    if (final) {
-      if (!Update.end(true)) {
+    webServer->on((apiPrefix + "/config").c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
         String output;
         JsonDocument doc;
-        doc["message"] = "Update error";
-        doc["error"] = Update.errorString();
+        doc["baseUrl"] = getBaseUrl();
+        doc["otaPassword"] = "";
+        doc["intervalVersionCheck"] = intervalVersionCheckMillis / 60 / 1000;
         serializeJson(doc, output);
-        request->send(500, "application/json", output);
+        request->send(200, "application/json", output);
+    });
 
-        logMessage("[OTA] Error when calling calling Update.end().");
-        logMessage("[OTA] Error: " + String(Update.errorString()));
-        otaIsRunning = false;
-      } else {
-        logMessage("[OTA] Firmware update successful.");
-        request->send(200, "application/json", "{\"message\":\"Please wait while the device reboots!\"}");
-        yield();
-        delay(250);
+    webServer->on((apiPrefix + "/config").c_str(), HTTP_POST, [&](AsyncWebServerRequest *request) {}, NULL,
+                  [&](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+                      JsonDocument jsonBuffer;
+                      deserializeJson(jsonBuffer, (const char *)data);
+                      auto resp = request;
+                      auto changes = 0;
 
-        logMessage("[OTA] Update complete, rebooting now!");
-        Serial.flush();
-        ESP.restart();
-      }
-    }
-  });
+                      if (jsonBuffer["baseUrl"].is<String>()) {
+                          setBaseUrl(jsonBuffer["baseUrl"].as<String>());
+                          logMessage("[OTA][CONFIG] baseUrl changed to " + baseUrl + "\n");
+                          changes++;
+                      }
+                      if (jsonBuffer["otaPassword"].is<String>()) {
+                          setOtaPassword(jsonBuffer["otaPassword"].as<String>());
+                          logMessage("[OTA][CONFIG] otaPassword changed to " + otaPassword + "\n");
+                          changes++;
+                      }
+                      if (jsonBuffer["intervalVersionCheck"].is<int>()) {
+                          setVersionCheckInterval(jsonBuffer["intervalVersionCheck"].as<int>());
+                          logMessage("[OTA][CONFIG] intervalVersionCheck changed to " + String(intervalVersionCheckMillis / 60 / 1000) + " minutes" + "\n");
+                          changes++;
+                      }
+
+                      if (!changes) {
+                          resp->send(422, "application/json", "{\"message\":\"Invalid data\"}");
+                      } else {
+                          resp->send(200, "application/json", "{\"message\":\"Config updated\"}");
+                      }
+                  });
+
+    webServer->on((apiPrefix + "/firmware/info").c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+        auto data = esp_ota_get_running_partition();
+        String output;
+        JsonDocument doc;
+        doc["partition_type"] = data->type;
+        doc["partition_subtype"] = data->subtype;
+        doc["address"] = data->address;
+        doc["size"] = data->size;
+        doc["label"] = data->label;
+        doc["encrypted"] = data->encrypted;
+        doc["firmware_version"] = currentFwRelease;
+        doc["firmware_date"] = currentFwDate;
+        serializeJson(doc, output);
+        request->send(200, "application/json", output);
+    });
+
+    webServer->on((apiPrefix + "/partition/switch").c_str(), HTTP_POST, [&](AsyncWebServerRequest *request) {
+        logMessage("[OTA] Switching boot partition");
+        auto next = esp_ota_get_next_update_partition(NULL);
+        auto error = esp_ota_set_boot_partition(next);
+        if (error == ESP_OK) {
+            logMessage("[OTA] New partition ready for boot" + "\n");
+            request->send(200, "application/json", "{\"message\":\"New partition ready for boot. Rebooting....\"}");
+            yield();
+            delay(250);
+
+            logMessage("[OTA] Rebooting now!" + "\n");
+            Serial.flush();
+            ESP.restart();
+        } else {
+            logMessage("[OTA] Error switching boot partition - " + String(esp_err_to_name(error)) + "\n");
+            request->send(500, "application/json", String("{\"message\":\"Error switching boot partition - ") + String(esp_err_to_name(error)) + "\"}");
+        }
+    });
+
+    webServer->on((apiPrefix + "/esp").c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+        String output;
+        JsonDocument json;
+
+        JsonObject booting = json["booting"].to<JsonObject>();
+        booting["rebootReason"] = esp_reset_reason();
+        booting["partitionCount"] = esp_ota_get_app_partition_count();
+
+        auto partition = esp_ota_get_boot_partition();
+        JsonObject bootPartition = json["bootPartition"].to<JsonObject>();
+        bootPartition["address"] = partition->address;
+        bootPartition["size"] = partition->size;
+        bootPartition["label"] = partition->label;
+        bootPartition["encrypted"] = partition->encrypted;
+        switch (partition->type) {
+        case ESP_PARTITION_TYPE_APP:
+            bootPartition["type"] = "app";
+            break;
+        case ESP_PARTITION_TYPE_DATA:
+            bootPartition["type"] = "data";
+            break;
+        default:
+            bootPartition["type"] = "any";
+        }
+        bootPartition["subtype"] = partition->subtype;
+
+        partition = esp_ota_get_running_partition();
+        JsonObject runningPartition = json["runningPartition"].to<JsonObject>();
+        runningPartition["address"] = partition->address;
+        runningPartition["size"] = partition->size;
+        runningPartition["label"] = partition->label;
+        runningPartition["encrypted"] = partition->encrypted;
+        switch (partition->type) {
+        case ESP_PARTITION_TYPE_APP:
+            runningPartition["type"] = "app";
+            break;
+        case ESP_PARTITION_TYPE_DATA:
+            runningPartition["type"] = "data";
+            break;
+        default:
+            runningPartition["type"] = "any";
+        }
+        runningPartition["subtype"] = partition->subtype;
+
+        JsonObject build = json["build"].to<JsonObject>();
+        build["date"] = __DATE__;
+        build["time"] = __TIME__;
+
+        JsonObject ram = json["ram"].to<JsonObject>();
+        ram["heapSize"] = ESP.getHeapSize();
+        ram["freeHeap"] = ESP.getFreeHeap();
+        ram["usagePercent"] = (float)ESP.getFreeHeap() / (float)ESP.getHeapSize() * 100.f;
+        ram["minFreeHeap"] = ESP.getMinFreeHeap();
+        ram["maxAllocHeap"] = ESP.getMaxAllocHeap();
+
+        JsonObject spi = json["spi"].to<JsonObject>();
+        spi["psramSize"] = ESP.getPsramSize();
+        spi["freePsram"] = ESP.getFreePsram();
+        spi["minFreePsram"] = ESP.getMinFreePsram();
+        spi["maxAllocPsram"] = ESP.getMaxAllocPsram();
+
+        JsonObject chip = json["chip"].to<JsonObject>();
+        chip["revision"] = ESP.getChipRevision();
+        chip["model"] = ESP.getChipModel();
+        chip["cores"] = ESP.getChipCores();
+        chip["cpuFreqMHz"] = ESP.getCpuFreqMHz();
+        chip["cycleCount"] = ESP.getCycleCount();
+        chip["sdkVersion"] = ESP.getSdkVersion();
+        chip["efuseMac"] = ESP.getEfuseMac();
+        float temperature_c;
+        temp_sensor_read_celsius(&temperature_c);
+        chip["temperature"] = temperature_c;
+
+        JsonObject flash = json["flash"].to<JsonObject>();
+        flash["flashChipSize"] = ESP.getFlashChipSize();
+        flash["flashChipRealSize"] = spi_flash_get_chip_size();
+        flash["flashChipSpeedMHz"] = ESP.getFlashChipSpeed() / 1000000;
+        flash["flashChipMode"] = ESP.getFlashChipMode();
+        flash["sdkVersion"] = ESP.getFlashChipSize();
+
+        JsonObject sketch = json["sketch"].to<JsonObject>();
+        sketch["size"] = ESP.getSketchSize();
+        sketch["maxSize"] = ESP.getFreeSketchSpace();
+        sketch["usagePercent"] = (float)ESP.getSketchSize() / (float)ESP.getFreeSketchSpace() * 100.f;
+        sketch["md5"] = ESP.getSketchMD5();
+
+        serializeJson(json, output);
+        request->send(200, "application/json", output);
+    });
+
+    webServer->on((apiPrefix + "/upload").c_str(), HTTP_POST,
+                  [&](AsyncWebServerRequest *request) {},
+                  [&](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
+                      if (otaPassword.length()) {
+                          if (!request->authenticate("ota", otaPassword.c_str())) {
+                              logMessage("[OTA] Incorrect OTA request: Invalid password provided!" + "\n");
+                              return request->send(401, "application/json", "{\"message\":\"Invalid OTA password provided!\"}");
+                          }
+                      } // else logMessage("[OTA] No password confirequest->authenticategured, no authentication requested!"+ "\n");
+
+                      if (!index) {
+                          otaIsRunning = true;
+                          logMessage("[OTA] Begin firmware update with filename: " + filename + "\n");
+                          // if filename includes spiffs|littlefs, update the spiffs|littlefs partition
+                          int cmd = (filename.indexOf("spiffs") > -1 || filename.indexOf("littlefs") > -1) ? U_SPIFFS : U_FLASH;
+                          if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
+                              logMessage("[OTA] Error: " + String(Update.errorString()) + "\n");
+                              request->send(500, "application/json", "{\"message\":\"Unable to begin firmware update!\"}");
+                              otaIsRunning = false;
+                          }
+                      }
+
+                      if (Update.write(data, len) != len) {
+                          logMessage("[OTA] Error: " + String(Update.errorString()) + "\n");
+                          request->send(500, "application/json", "{\"message\":\"Unable to write firmware update data!\"}");
+                          otaIsRunning = false;
+                      }
+
+                      if (final) {
+                          if (!Update.end(true)) {
+                              String output;
+                              JsonDocument doc;
+                              doc["message"] = "Update error";
+                              doc["error"] = Update.errorString();
+                              serializeJson(doc, output);
+                              request->send(500, "application/json", output);
+
+                              logMessage("[OTA] Error when calling calling Update.end()." + "\n");
+                              logMessage("[OTA] Error: " + String(Update.errorString()) + "\n");
+                              otaIsRunning = false;
+                          } else {
+                              logMessage("[OTA] Firmware update successful." + "\n");
+                              request->send(200, "application/json", "{\"message\":\"Please wait while the device reboots!\"}");
+                              yield();
+                              delay(250);
+
+                              logMessage("[OTA] Update complete, rebooting now!" + "\n");
+                              Serial.flush();
+                              ESP.restart();
+                          }
+                      }
+                  });
 }
 
 /**
  * @brief Start a background task to regulary check for updates
  */
 bool OTAWEBUPDATER::startBackgroundTask() {
-  stopBackgroundTask();
-  BaseType_t xReturned = xTaskCreatePinnedToCore(
-    otaTask,
-    "OtaWebUpdater",
-    4000,   // Stack size in words
-    this,   // Task input parameter
-    0,      // Priority of the task
-    &otaCheckTask,  // Task handle.
-    0       // Core where the task should run
-  );
-  if( xReturned != pdPASS ) {
-    logMessage("[OTA] Unable to run the background Task");
-    return false;
-  }
-  return true;
+    stopBackgroundTask();
+    BaseType_t xReturned = xTaskCreatePinnedToCore(
+        otaTask,
+        "OtaWebUpdater",
+        4000,          // Stack size in words
+        this,          // Task input parameter
+        0,             // Priority of the task
+        &otaCheckTask, // Task handle.
+        0              // Core where the task should run
+    );
+    if (xReturned != pdPASS) {
+        logMessage("[OTA] Unable to run the background Task" + "\n");
+        return false;
+    }
+    return true;
 }
 
 /**
  * @brief Stops a background task if existing
  */
 void OTAWEBUPDATER::stopBackgroundTask() {
-  if (otaCheckTask != NULL) { // make sure there is no task running
-    vTaskDelete(otaCheckTask);
-    logMessage("[OTA] Stopped the background Task");
-  }
+    if (otaCheckTask != NULL) { // make sure there is no task running
+        vTaskDelete(otaCheckTask);
+        logMessage("[OTA] Stopped the background Task" + "\n");
+    }
 }
 
 /**
  * @brief Background Task running as a loop forever
  * @param param needs to be a valid OtaWebUpdater instance
  */
-void otaTask(void* param) {
-  yield();
-  delay(1500); // Do not execute immediately
-  yield();
+void otaTask(void *param) {
+    yield();
+    delay(1500); // Do not execute immediately
+    yield();
 
-  OTAWEBUPDATER * otaWebUpdater = (OTAWEBUPDATER *) param;
-  for(;;) {
-    yield();
-    otaWebUpdater->loop();
-    yield();
-    vTaskDelay(otaWebUpdater->xDelay);
-  }
+    OTAWEBUPDATER *otaWebUpdater = (OTAWEBUPDATER *)param;
+    for (;;) {
+        yield();
+        otaWebUpdater->loop();
+        yield();
+        vTaskDelay(otaWebUpdater->xDelay);
+    }
 }
 
 /**
  * @brief Run our internal routine
  */
 void OTAWEBUPDATER::loop() {
-  if (newReleaseAvailable) executeUpdate();
+    if (newReleaseAvailable)
+        executeUpdate();
 
-  if (networkReady) {
-    if (initialCheck) {
-      if (millis() - lastVersionCheckMillis < intervalVersionCheckMillis) return;
-      lastVersionCheckMillis = millis();
-    } else initialCheck = true;
+    if (networkReady) {
+        if (initialCheck) {
+            if (millis() - lastVersionCheckMillis < intervalVersionCheckMillis)
+                return;
+            lastVersionCheckMillis = millis();
+        } else
+            initialCheck = true;
 
-    if (baseUrl.isEmpty()) return;
-    logMessage("[OTA] Searching a new firmware release");
-    checkAvailableVersion();
-  }
+        if (baseUrl.isEmpty())
+            return;
+        logMessage("[OTA] Searching a new firmware release" + "\n");
+        checkAvailableVersion();
+    }
 }
 
 /**
@@ -435,149 +451,151 @@ void OTAWEBUPDATER::loop() {
  * @return false on error
  */
 bool OTAWEBUPDATER::checkAvailableVersion() {
-  if (baseUrl.isEmpty()) {
-    logMessage("[OTA] No baseUrl configured");
-    return false;
-  }
+    if (baseUrl.isEmpty()) {
+        logMessage("[OTA] No baseUrl configured" + "\n");
+        return false;
+    }
 
-  WiFiClient client;
-  HTTPClient http;
-  
-  // Send request
-  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
-  http.useHTTP10(true);
-  http.begin(client, baseUrl + "/current-version.json");
-  http.GET();
+    WiFiClient client;
+    HTTPClient http;
 
-  // Parse response
-  JsonDocument doc;
-  deserializeJson(doc, http.getStream());
+    // Send request
+    http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+    http.useHTTP10(true);
+    http.begin(client, baseUrl + "/current-version.json");
+    http.GET();
 
-  // Disconnect
-  http.end();
+    // Parse response
+    JsonDocument doc;
+    deserializeJson(doc, http.getStream());
 
-  auto date = doc["date"].as<String>();
-  auto revision = doc["revision"].as<String>();
+    // Disconnect
+    http.end();
 
-  if (date.isEmpty() || revision.isEmpty() || date == "null" || revision == "null") {
-    logMessage("[OTA] Invalid response or json in " + baseUrl + "/current-version.json");
-    return false;
-  }
-  if (date > currentFwDate) { // a newer Version is available!
-    logMessage("[OTA] Newer firmware available: " + date + " vs " + currentFwDate);
-    newReleaseAvailable = true;
-  }
-  logMessage("[OTA] No newer firmware available");
-  return true;
+    auto date = doc["date"].as<String>();
+    auto revision = doc["revision"].as<String>();
+
+    if (date.isEmpty() || revision.isEmpty() || date == "null" || revision == "null") {
+        logMessage("[OTA] Invalid response or json in " + baseUrl + "/current-version.json" + "\n");
+        return false;
+    }
+    if (date > currentFwDate) { // a newer Version is available!
+        logMessage("[OTA] Newer firmware available: " + date + " vs " + currentFwDate + "\n");
+        newReleaseAvailable = true;
+    }
+    logMessage("[OTA] No newer firmware available" + "\n");
+    return true;
 }
 
 /**
  * @brief Download a file from a url and execute the firmware update
- * 
+ *
  * @param baseUrl HTTPS url to download from
  * @param filename  The filename to download
- * @return true 
- * @return false 
+ * @return true
+ * @return false
  */
 bool OTAWEBUPDATER::updateFile(String baseUrl, String filename) {
-  if (baseUrl.isEmpty()) {
-    logMessage("[OTA] No baseUrl configured");
-    return false;
-  }
-
-  otaIsRunning = true;
-  int filetype = (filename.indexOf("spiffs") > -1 || filename.indexOf("littlefs") > -1) ? U_SPIFFS : U_FLASH;
-
-  String firmwareUrl = baseUrl + "/" + filename;
-  WiFiClient client;
-  HTTPClient http;
-  
-  // Reserve some memory to download the file
-  auto bufferAllocationLen = 128*1024;
-  uint8_t * buffer;
-  try {
-    buffer = new uint8_t[bufferAllocationLen];
-  } catch (std::bad_alloc& ba) {
-    logMessage("[OTA] Unable to request memory with malloc(" + String(bufferAllocationLen+1) + ")");
-    otaIsRunning = false;
-    return false;
-  }
-  
-  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
-  http.begin(client, firmwareUrl);
-
-  logMessage("[OTA] Firmware type: " + String(filetype == U_SPIFFS ? "spiffs" : "flash"));
-  logMessage("[OTA] Firmware url:  " + firmwareUrl);
-
-  if (http.GET() == 200) {
-    // get length of document (is -1 when Server sends no Content-Length header)
-    auto totalLength = http.getSize();
-    auto len = totalLength;
-    auto currentLength = 0;
-
-    // this is required to start firmware update process
-    Update.begin(UPDATE_SIZE_UNKNOWN, filetype);
-    logMessage("[OTA] Firmware size: " + String(totalLength));
-
-    // create buffer for read
-    //uint8_t buff[4096] = { 0 };
-    WiFiClient * stream = http.getStreamPtr();
-
-    // read all data from server
-    logMessage("[OTA] Begin firmware upgrade...");
-    while(http.connected() && (len > 0 || len == -1)) {
-      // get available data size
-      size_t size = stream->available();
-      if(size) {
-        // read up to 4096 byte
-        int readBufLen = stream->readBytes(buffer, ((size > bufferAllocationLen) ? bufferAllocationLen : size));
-        if(len > 0) len -= readBufLen;
-
-        Update.write(buffer, readBufLen);
-        logMessage("[OTA] Status: " + String(currentLength));
-
-        currentLength += readBufLen;
-        if(currentLength != totalLength) continue;
-        // Update completed
-        Update.end(true);
-        http.end();
-        logMessage("\n");
-        logMessage("[OTA] Upgrade successfully executed. Wrote bytes: " + String(currentLength));
-
-        otaIsRunning = false;
-        delete[] buffer;
-        return true;
-      }
-      delay(1);
+    if (baseUrl.isEmpty()) {
+        logMessage("[OTA] No baseUrl configured" + "\n");
+        return false;
     }
-  }
 
-  otaIsRunning = false;
-  delete[] buffer;
-  return false;
+    otaIsRunning = true;
+    int filetype = (filename.indexOf("spiffs") > -1 || filename.indexOf("littlefs") > -1) ? U_SPIFFS : U_FLASH;
+
+    String firmwareUrl = baseUrl + "/" + filename;
+    WiFiClient client;
+    HTTPClient http;
+
+    // Reserve some memory to download the file
+    auto bufferAllocationLen = 128 * 1024;
+    uint8_t *buffer;
+    try {
+        buffer = new uint8_t[bufferAllocationLen];
+    } catch (std::bad_alloc &ba) {
+        logMessage("[OTA] Unable to request memory with malloc(" + String(bufferAllocationLen + 1) + ")" + "\n");
+        otaIsRunning = false;
+        return false;
+    }
+
+    http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+    http.begin(client, firmwareUrl);
+
+    logMessage("[OTA] Firmware type: " + String(filetype == U_SPIFFS ? "spiffs" : "flash") + "\n");
+    logMessage("[OTA] Firmware url:  " + firmwareUrl + "\n");
+
+    if (http.GET() == 200) {
+        // get length of document (is -1 when Server sends no Content-Length header)
+        auto totalLength = http.getSize();
+        auto len = totalLength;
+        auto currentLength = 0;
+
+        // this is required to start firmware update process
+        Update.begin(UPDATE_SIZE_UNKNOWN, filetype);
+        logMessage("[OTA] Firmware size: " + String(totalLength) + "\n");
+
+        // create buffer for read
+        // uint8_t buff[4096] = { 0 };
+        WiFiClient *stream = http.getStreamPtr();
+
+        // read all data from server
+        logMessage("[OTA] Begin firmware upgrade..." + "\n");
+        while (http.connected() && (len > 0 || len == -1)) {
+            // get available data size
+            size_t size = stream->available();
+            if (size) {
+                // read up to 4096 byte
+                int readBufLen = stream->readBytes(buffer, ((size > bufferAllocationLen) ? bufferAllocationLen : size));
+                if (len > 0)
+                    len -= readBufLen;
+
+                Update.write(buffer, readBufLen);
+                logMessage("[OTA] Status: " + String(currentLength) + "\n");
+
+                currentLength += readBufLen;
+                if (currentLength != totalLength)
+                    continue;
+                // Update completed
+                Update.end(true);
+                http.end();
+                logMessage("\n");
+                logMessage("[OTA] Upgrade successfully executed. Wrote bytes: " + String(currentLength) + "\n");
+
+                otaIsRunning = false;
+                delete[] buffer;
+                return true;
+            }
+            delay(1);
+        }
+    }
+
+    otaIsRunning = false;
+    delete[] buffer;
+    return false;
 }
 
 /**
  * @brief Execute the update with a firmware from the external Webserver
  */
 void OTAWEBUPDATER::executeUpdate() {
-  if (baseUrl.isEmpty()) {
-    logMessage("[OTA] No baseUrl configured");
-    return;
-  }
+    if (baseUrl.isEmpty()) {
+        logMessage("[OTA] No baseUrl configured");
+        return;
+    }
 
-  otaIsRunning = true;
-  if (updateFile(baseUrl, "littlefs.bin") && updateFile(baseUrl, "firmware.bin") ) {
-    ESP.restart();
-  } else {
-    otaIsRunning = false;
-    logMessage("[OTA] Failed to update firmware");
-  }
+    otaIsRunning = true;
+    if (updateFile(baseUrl, "littlefs.bin") && updateFile(baseUrl, "firmware.bin")) {
+        ESP.restart();
+    } else {
+        otaIsRunning = false;
+        logMessage("[OTA] Failed to update firmware" + "\n");
+    }
 }
 
 void OTAWEBUPDATER::attachUI() {
-  webServer->on((uiPrefix).c_str(), HTTP_GET, [&](AsyncWebServerRequest* request) {
-    String html = R"html(
+    webServer->on((uiPrefix).c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+        String html = R"html(
   <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -775,16 +793,16 @@ void OTAWEBUPDATER::attachUI() {
             <div id="systemInfo" class="grid"></div>
         </div>
   )html";
-  #if OTAWEBUPDATER_USE_NVS == true
-  html += R"html(
+#if OTAWEBUPDATER_USE_NVS == true
+        html += R"html(
         <div class="card">
             <h2>Configuration</h2>
             <div id="configuration"></div>
             <button onclick="saveConfig()">Save Settings</button>
         </div>
     )html";
-  #endif
-  html += R"html(
+#endif
+        html += R"html(
     </div>
 
     <script>
@@ -1025,6 +1043,6 @@ void OTAWEBUPDATER::attachUI() {
 </body>
 </html>)html";
 
-    request->send(200, "text/html", html);
-  });
+        request->send(200, "text/html", html);
+    });
 }
