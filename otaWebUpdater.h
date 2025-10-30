@@ -32,6 +32,9 @@ void otaTask(void* param);
 
 class OTAWEBUPDATER {
   protected:
+    // Logger stream
+    Stream *logger = &Serial;
+
 #if OTAWEBUPDATER_USE_NVS == true
     Preferences preferences;            // Used to store AP credentials to NVS
     char * NVS;                         // Name used for NVS preferences
@@ -99,9 +102,14 @@ class OTAWEBUPDATER {
       currentFwRelease = fwRelease;
     }
 
+    // Set current logger
+    void setLogger(Stream *stream);
+
   private:
     // Print a log message to Serial, can be overwritten
     virtual void logMessage(String msg);
+    // Print a part of log message to Serial, can be overwritten
+    virtual void logMessagePart(String msg);
 
     // URL to load the data from
     // Files that needs to be located at this URL:
