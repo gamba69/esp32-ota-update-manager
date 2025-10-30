@@ -36,7 +36,7 @@ void OTAWEBUPDATER::logMessage(String msg) {
 void OTAWEBUPDATER::logMessagePart(String msg) {
     logger->print(msg);
 }
-void WIFIMANAGER::setLogger(Stream *stream) {
+void OTAWEBUPDATER::setLogger(Stream *stream) {
     logger = stream;
 }
 
