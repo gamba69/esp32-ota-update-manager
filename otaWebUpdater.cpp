@@ -101,7 +101,7 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
         logMessage("[OTA] Loaded baseUrl from NVS: " + baseUrl + "\n");
 
         intervalVersionCheckMillis = preferences.getULong64("VersChkIntvl", intervalVersionCheckMillis);
-        logMessage("[OTA] Loaded VersionCheckInterval from NVS: " + String(intervalVersionCheckMillis / 60 / 1000) + " minutes" + "\n");
+        logMessage("[OTA] Loaded VersionCheckInterval from NVS: " + String(intervalVersionCheckMillis / 60 / 1000) + " minutes\n");
 
         otaPassword = preferences.getString("OtaPassword", otaPassword);
         logMessage("[OTA] Loaded OtaPassword from NVS: " + otaPassword + "\n");
@@ -109,7 +109,7 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
         preferences.end();
     }
 #else
-    logMessage("[OTA] NVS is not used, ignoring namespace '" + String(ns) + "' settings" + "\n");
+    logMessage("[OTA] NVS is not used, ignoring namespace '" + String(ns) + "' settings\n");
 #endif
 
     temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
@@ -118,12 +118,12 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
     auto data = esp_ota_get_running_partition();
     logMessage("[OTA] Running partition: " + String(data->label) + " (" + String(data->subtype) + ")");
 
-    logMessage("[OTA] Created, registering WiFi events");
+    logMessage("[OTA] Created, registering WiFi events\n");
     if (WiFi.isConnected())
         networkReady = true;
 
     auto eventHandlerUp = [&](WiFiEvent_t event, WiFiEventInfo_t info) {
-        logMessage("[OTA][WIFI] onEvent() Network connected");
+        logMessage("[OTA][WIFI] onEvent() Network connected\n");
         networkReady = true;
     };
     WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_GOT_IP);
@@ -132,7 +132,7 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
     WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_ETH_GOT_IP6);
 
     auto eventHandlerDown = [&](WiFiEvent_t event, WiFiEventInfo_t info) {
-        logMessage("[OTA][WIFI] onEvent() Network disconnected" + "\n");
+        logMessage("[OTA][WIFI] onEvent() Network disconnected\n");
         networkReady = false;
     };
     WiFi.onEvent(eventHandlerUp, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -212,16 +212,16 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer *srv) {
     });
 
     webServer->on((apiPrefix + "/partition/switch").c_str(), HTTP_POST, [&](AsyncWebServerRequest *request) {
-        logMessage("[OTA] Switching boot partition");
+        logMessage("[OTA] Switching boot partition\n");
         auto next = esp_ota_get_next_update_partition(NULL);
         auto error = esp_ota_set_boot_partition(next);
         if (error == ESP_OK) {
-            logMessage("[OTA] New partition ready for boot" + "\n");
+            logMessage("[OTA] New partition ready for boot\n");
             request->send(200, "application/json", "{\"message\":\"New partition ready for boot. Rebooting....\"}");
             yield();
             delay(250);
 
-            logMessage("[OTA] Rebooting now!" + "\n");
+            logMessage("[OTA] Rebooting now!\n");
             Serial.flush();
             ESP.restart();
         } else {
@@ -325,7 +325,7 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer *srv) {
                   [&](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
                       if (otaPassword.length()) {
                           if (!request->authenticate("ota", otaPassword.c_str())) {
-                              logMessage("[OTA] Incorrect OTA request: Invalid password provided!" + "\n");
+                              logMessage("[OTA] Incorrect OTA request: Invalid password provided!\n");
                               return request->send(401, "application/json", "{\"message\":\"Invalid OTA password provided!\"}");
                           }
                       } // else logMessage("[OTA] No password confirequest->authenticategured, no authentication requested!"+ "\n");
@@ -357,16 +357,16 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer *srv) {
                               serializeJson(doc, output);
                               request->send(500, "application/json", output);
 
-                              logMessage("[OTA] Error when calling calling Update.end()." + "\n");
+                              logMessage("[OTA] Error when calling calling Update.end().\n");
                               logMessage("[OTA] Error: " + String(Update.errorString()) + "\n");
                               otaIsRunning = false;
                           } else {
-                              logMessage("[OTA] Firmware update successful." + "\n");
+                              logMessage("[OTA] Firmware update successful.\n");
                               request->send(200, "application/json", "{\"message\":\"Please wait while the device reboots!\"}");
                               yield();
                               delay(250);
 
-                              logMessage("[OTA] Update complete, rebooting now!" + "\n");
+                              logMessage("[OTA] Update complete, rebooting now!\n");
                               Serial.flush();
                               ESP.restart();
                           }
@@ -389,7 +389,7 @@ bool OTAWEBUPDATER::startBackgroundTask() {
         0              // Core where the task should run
     );
     if (xReturned != pdPASS) {
-        logMessage("[OTA] Unable to run the background Task" + "\n");
+        logMessage("[OTA] Unable to run the background Task\n");
         return false;
     }
     return true;
@@ -401,7 +401,7 @@ bool OTAWEBUPDATER::startBackgroundTask() {
 void OTAWEBUPDATER::stopBackgroundTask() {
     if (otaCheckTask != NULL) { // make sure there is no task running
         vTaskDelete(otaCheckTask);
-        logMessage("[OTA] Stopped the background Task" + "\n");
+        logMessage("[OTA] Stopped the background Task\n");
     }
 }
 
@@ -440,7 +440,7 @@ void OTAWEBUPDATER::loop() {
 
         if (baseUrl.isEmpty())
             return;
-        logMessage("[OTA] Searching a new firmware release" + "\n");
+        logMessage("[OTA] Searching a new firmware release\n");
         checkAvailableVersion();
     }
 }
@@ -452,7 +452,7 @@ void OTAWEBUPDATER::loop() {
  */
 bool OTAWEBUPDATER::checkAvailableVersion() {
     if (baseUrl.isEmpty()) {
-        logMessage("[OTA] No baseUrl configured" + "\n");
+        logMessage("[OTA] No baseUrl configured\n");
         return false;
     }
 
@@ -476,14 +476,14 @@ bool OTAWEBUPDATER::checkAvailableVersion() {
     auto revision = doc["revision"].as<String>();
 
     if (date.isEmpty() || revision.isEmpty() || date == "null" || revision == "null") {
-        logMessage("[OTA] Invalid response or json in " + baseUrl + "/current-version.json" + "\n");
+        logMessage("[OTA] Invalid response or json in " + baseUrl + "/current-version.json\n");
         return false;
     }
     if (date > currentFwDate) { // a newer Version is available!
         logMessage("[OTA] Newer firmware available: " + date + " vs " + currentFwDate + "\n");
         newReleaseAvailable = true;
     }
-    logMessage("[OTA] No newer firmware available" + "\n");
+    logMessage("[OTA] No newer firmware available\n");
     return true;
 }
 
@@ -497,7 +497,7 @@ bool OTAWEBUPDATER::checkAvailableVersion() {
  */
 bool OTAWEBUPDATER::updateFile(String baseUrl, String filename) {
     if (baseUrl.isEmpty()) {
-        logMessage("[OTA] No baseUrl configured" + "\n");
+        logMessage("[OTA] No baseUrl configured\n");
         return false;
     }
 
@@ -514,7 +514,7 @@ bool OTAWEBUPDATER::updateFile(String baseUrl, String filename) {
     try {
         buffer = new uint8_t[bufferAllocationLen];
     } catch (std::bad_alloc &ba) {
-        logMessage("[OTA] Unable to request memory with malloc(" + String(bufferAllocationLen + 1) + ")" + "\n");
+        logMessage("[OTA] Unable to request memory with malloc(" + String(bufferAllocationLen + 1) + ")\n");
         otaIsRunning = false;
         return false;
     }
@@ -540,7 +540,7 @@ bool OTAWEBUPDATER::updateFile(String baseUrl, String filename) {
         WiFiClient *stream = http.getStreamPtr();
 
         // read all data from server
-        logMessage("[OTA] Begin firmware upgrade..." + "\n");
+        logMessage("[OTA] Begin firmware upgrade...\n");
         while (http.connected() && (len > 0 || len == -1)) {
             // get available data size
             size_t size = stream->available();
@@ -559,7 +559,6 @@ bool OTAWEBUPDATER::updateFile(String baseUrl, String filename) {
                 // Update completed
                 Update.end(true);
                 http.end();
-                logMessage("\n");
                 logMessage("[OTA] Upgrade successfully executed. Wrote bytes: " + String(currentLength) + "\n");
 
                 otaIsRunning = false;
@@ -580,7 +579,7 @@ bool OTAWEBUPDATER::updateFile(String baseUrl, String filename) {
  */
 void OTAWEBUPDATER::executeUpdate() {
     if (baseUrl.isEmpty()) {
-        logMessage("[OTA] No baseUrl configured");
+        logMessage("[OTA] No baseUrl configured\n");
         return;
     }
 
@@ -589,7 +588,7 @@ void OTAWEBUPDATER::executeUpdate() {
         ESP.restart();
     } else {
         otaIsRunning = false;
-        logMessage("[OTA] Failed to update firmware" + "\n");
+        logMessage("[OTA] Failed to update firmware\n");
     }
 }
 
