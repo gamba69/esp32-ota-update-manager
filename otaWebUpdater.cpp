@@ -31,22 +31,27 @@
  * enhanced logging.
  */
 void OTAWEBUPDATER::logMessage(String msg, bool showtime) {
-    if (logtime && showtime) {
-        logger->print(logtime() + " ");
+    if (logLine && logLinePart) {
+        if (logTime && showtime) {
+            logLinePart(logTime() + " ");
+        }
+        logLine(msg);
     }
-    logger->println(msg);
 }
 
 void OTAWEBUPDATER::logMessagePart(String msg, bool showtime) {
-    if (logtime && showtime) {
-        logger->print(logtime() + " ");
+    if (logLinePart) {
+        if (logTime && showtime) {
+            logLinePart(logTime() + " ");
+        }
+        logLinePart(msg);
     }
-    logger->print(msg);
 }
 
-void OTAWEBUPDATER::setLogger(Print *print, std::function<String()> function) {
-    logger = print;
-    logtime = function;
+void OTAWEBUPDATER::setLogger(std::function<void(String)> logLineCallback, std::function<void(String)> logLinePartCallback, std::function<String()> logTimeCallback) {
+    logLine = logLineCallback;
+    logLinePart = logLinePartCallback;
+    logTime = logTimeCallback;
 }
 
 /**

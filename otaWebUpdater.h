@@ -32,10 +32,12 @@ void otaTask(void *param);
 
 class OTAWEBUPDATER {
   protected:
+    // Logger println
+    std::function<void(String)> logLine = NULL;
     // Logger print
-    Print *logger = &Serial;
+    std::function<void(String)> logLinePart = NULL;
     // Logger time function
-    std::function<String()> logtime = NULL;
+    std::function<String()> logTime = NULL;
 
 #if OTAWEBUPDATER_USE_NVS == true
     Preferences preferences; // Used to store AP credentials to NVS
@@ -105,7 +107,7 @@ class OTAWEBUPDATER {
     }
 
     // Set current logger
-    void setLogger(Print *print, std::function<String()> logtime = NULL);
+    void setLogger(std::function<void(String)> logLineCallback = NULL, std::function<void(String)> logLinePartCallback = NULL, std::function<String()> logTimeCallback = NULL);
 
   private:
     // Print a log message, can be overwritten
