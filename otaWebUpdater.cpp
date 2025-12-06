@@ -20,7 +20,7 @@
 #include <Preferences.h>
 #endif
 
-#include <driver/temp_sensor.h>
+#include <driver/temperature_sensor.h>
 
 /**
  * @brief Write a message to the Serial interface
