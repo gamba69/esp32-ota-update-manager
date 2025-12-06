@@ -14,6 +14,7 @@
 #include <WiFi.h>
 #include <esp_err.h>
 #include <esp_ota_ops.h>
+#include <esp_flash.h>
 #include <new> // ::operator new[]
 
 #if OTAWEBUPDATER_USE_NVS == true
@@ -325,7 +326,10 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer *srv) {
 
         JsonObject flash = json["flash"].to<JsonObject>();
         flash["flashChipSize"] = ESP.getFlashChipSize();
-        flash["flashChipRealSize"] = spi_flash_get_chip_size();
+        // flash["flashChipRealSize"] = spi_flash_get_chip_size();
+        uint32_t flash_size_chip;
+        esp_flash_get_size(NULL, &flash_size_chip);
+        flash["flashChipRealSize"] = flash_size_chip;
         flash["flashChipSpeedMHz"] = ESP.getFlashChipSpeed() / 1000000;
         flash["flashChipMode"] = ESP.getFlashChipMode();
         flash["sdkVersion"] = ESP.getFlashChipSize();
