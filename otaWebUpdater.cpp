@@ -135,6 +135,7 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
 
     temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
     temp_sensor_set_config(tsens_config);
+    temp_sensor_start();
 
     auto data = esp_ota_get_running_partition();
     logMessage("[OTA] Running partition: " + String(data->label) + " (" + String(data->subtype) + ")");
