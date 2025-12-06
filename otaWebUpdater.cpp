@@ -133,8 +133,8 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
     logMessage("[OTA] NVS is not used, ignoring namespace '" + String(ns) + "' settings");
 #endif
 
-    // temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
-    // temp_sensor_set_config(tsens_config);
+    temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
+    temp_sensor_set_config(tsens_config);
     
     auto data = esp_ota_get_running_partition();
     logMessage("[OTA] Running partition: " + String(data->label) + " (" + String(data->subtype) + ")");
@@ -321,7 +321,7 @@ void OTAWEBUPDATER::attachWebServer(AsyncWebServer *srv) {
         chip["sdkVersion"] = ESP.getSdkVersion();
         chip["efuseMac"] = ESP.getEfuseMac();
         float temperature_c = 0;
-        // temp_sensor_read_celsius(&temperature_c);
+        temp_sensor_read_celsius(&temperature_c);
         chip["temperature"] = temperature_c;
 
         JsonObject flash = json["flash"].to<JsonObject>();
