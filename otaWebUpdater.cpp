@@ -13,8 +13,8 @@
 #include <Update.h>
 #include <WiFi.h>
 #include <esp_err.h>
-#include <esp_ota_ops.h>
 #include <esp_flash.h>
+#include <esp_ota_ops.h>
 #include <new> // ::operator new[]
 
 #if OTAWEBUPDATER_USE_NVS == true
@@ -34,22 +34,23 @@
 void OTAWEBUPDATER::logMessage(String msg, bool showtime) {
     if (logLine && logLinePart) {
         if (logTime && showtime) {
-            logLinePart(logTime() + " ");
+            logLinePart(logTime() + " ", logSource);
         }
-        logLine(msg);
+        logLine(msg, logSource);
     }
 }
 
 void OTAWEBUPDATER::logMessagePart(String msg, bool showtime) {
     if (logLinePart) {
         if (logTime && showtime) {
-            logLinePart(logTime() + " ");
+            logLinePart(logTime() + " ", logSource);
         }
-        logLinePart(msg);
+        logLinePart(msg, logSource);
     }
 }
 
-void OTAWEBUPDATER::setLogger(std::function<void(String)> logLineCallback, std::function<void(String)> logLinePartCallback, std::function<String()> logTimeCallback) {
+void OTAWEBUPDATER::setLogger(const int logSrc, std::function<void(String, const int)> logLineCallback, std::function<void(String, const int)> logLinePartCallback, std::function<String()> logTimeCallback) {
+    logSource = logSrc;
     logLine = logLineCallback;
     logLinePart = logLinePartCallback;
     logTime = logTimeCallback;
@@ -135,7 +136,7 @@ OTAWEBUPDATER::OTAWEBUPDATER(const char *ns) {
 
     temp_sensor_config_t tsens_config = TSENS_CONFIG_DEFAULT();
     temp_sensor_set_config(tsens_config);
-    
+
     auto data = esp_ota_get_running_partition();
     logMessage("[OTA] Running partition: " + String(data->label) + " (" + String(data->subtype) + ")");
 
